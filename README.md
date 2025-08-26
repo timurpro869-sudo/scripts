@@ -1,12 +1,7 @@
--- Админ-кнопка (вставляй в админ-консоль/код строку)
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-if player.Name ~= "Golubkash" then
-    return -- только твой ник!
-end
 
 -- === GUI ===
 local screenGui = Instance.new("ScreenGui")
@@ -27,16 +22,16 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = button
 
--- Смайлик (уменьшенный)
+-- Смайлик (⬆️ маленький, по центру)
 local label = Instance.new("TextLabel")
-label.Size = UDim2.fromScale(1, 1)
+label.Size = UDim2.fromScale(0.6, 0.6) -- уменьшенный
+label.Position = UDim2.fromScale(0.2, 0.2) -- центрируем
 label.BackgroundTransparency = 1
 label.Text = "⬆️"
-label.TextScaled = true
 label.Font = Enum.Font.SourceSansBold
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextSize = 28 -- фиксированный размер
 label.Parent = button
-label.TextSize = 36
 
 -- 🌈 Радужная анимация
 task.spawn(function()
@@ -50,7 +45,7 @@ end)
 
 -- === Drag (тач и мышь) ===
 local dragging = false
-local dragInput, dragStart, startPos
+local dragStart, startPos
 
 local function update(input)
     local delta = input.Position - dragStart

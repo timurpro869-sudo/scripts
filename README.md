@@ -1,7 +1,11 @@
+-- LocalScript (StarterPlayerScripts)
+
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
+local minDistance = 5 -- допустимый "откат"
 
 -- === GUI ===
 local screenGui = Instance.new("ScreenGui")
@@ -22,15 +26,15 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = button
 
--- Смайлик (⬆️ маленький, по центру)
+-- Смайлик (⬆️ по центру)
 local label = Instance.new("TextLabel")
-label.Size = UDim2.fromScale(0.6, 0.6) -- уменьшенный
-label.Position = UDim2.fromScale(0.2, 0.2) -- центрируем
+label.Size = UDim2.fromScale(0.6, 0.6)
+label.Position = UDim2.fromScale(0.2, 0.2)
 label.BackgroundTransparency = 1
 label.Text = "⬆️"
 label.Font = Enum.Font.SourceSansBold
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.TextSize = 28 -- фиксированный размер
+label.TextSize = 28
 label.Parent = button
 
 -- 🌈 Радужная анимация
@@ -43,7 +47,7 @@ task.spawn(function()
     end
 end)
 
--- === Drag (тач и мышь) ===
+-- === Drag ===
 local dragging = false
 local dragStart, startPos
 
@@ -83,7 +87,6 @@ button.MouseButton1Click:Connect(function()
     active = not active
 
     if active then
-        -- включаем платформу
         local character = player.Character
         if not character or not character:FindFirstChild("HumanoidRootPart") then 
             active = false
@@ -100,10 +103,9 @@ button.MouseButton1Click:Connect(function()
         platform.Position = root.Position - Vector3.new(0, 3, 0)
         platform.Parent = workspace
 
-        -- 🕊️ Голубь (декаль)
         local decal = Instance.new("Decal")
         decal.Face = Enum.NormalId.Top
-        decal.Texture = "rbxassetid://47109339" -- белый голубь
+        decal.Texture = "rbxassetid://47109339"
         decal.Parent = platform
 
         task.spawn(function()
@@ -114,10 +116,36 @@ button.MouseButton1Click:Connect(function()
         end)
 
     else
-        -- выключаем платформу
         if platform then
             platform:Destroy()
             platform = nil
         end
     end
 end)
+
+-- === Анти-откат (работает после смерти) ===
+local function startAntiBackTeleport(character)
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    local lastPos = hrp.Position
+
+    RunService.Heartbeat:Connect(function()
+        if hrp and hrp.Parent then
+            local currentPos = hrp.Position
+            local distance = (lastPos - currentPos).Magnitude
+
+            if distance > minDistance and currentPos.Y < lastPos.Y + 2 then
+                hrp.CFrame = CFrame.new(lastPos)
+            else
+                lastPos = currentPos
+            end
+        end
+    end)
+end
+
+-- если игрок уже заспавнен
+if player.Character then
+    startAntiBackTeleport(player.Character)
+end
+
+-- запуск после каждого респавна
+player.CharacterAdded:Connect(startAntiBackTeleport)

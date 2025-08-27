@@ -1,11 +1,9 @@
--- LocalScript (StarterPlayerScripts)
+-- Админ-кнопка (вставляй в админ-консоль/код строку)
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-local minDistance = 5 -- допустимый "откат"
 
 -- === GUI ===
 local screenGui = Instance.new("ScreenGui")
@@ -26,16 +24,16 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = button
 
--- Смайлик (⬆️ по центру)
+-- Смайлик (маленький и аккуратный)
 local label = Instance.new("TextLabel")
-label.Size = UDim2.fromScale(0.6, 0.6)
-label.Position = UDim2.fromScale(0.2, 0.2)
+label.Size = UDim2.fromScale(1, 1)
 label.BackgroundTransparency = 1
 label.Text = "⬆️"
+label.TextScaled = false
 label.Font = Enum.Font.SourceSansBold
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.TextSize = 28
 label.Parent = button
+label.TextSize = 20 -- уменьшенный размер для аккуратного вида
 
 -- 🌈 Радужная анимация
 task.spawn(function()
@@ -47,9 +45,9 @@ task.spawn(function()
     end
 end)
 
--- === Drag ===
+-- === Drag (тач и мышь) ===
 local dragging = false
-local dragStart, startPos
+local dragInput, dragStart, startPos
 
 local function update(input)
     local delta = input.Position - dragStart
@@ -103,15 +101,17 @@ button.MouseButton1Click:Connect(function()
         platform.Position = root.Position - Vector3.new(0, 3, 0)
         platform.Parent = workspace
 
+        -- 🕊️ Голубь (декаль)
         local decal = Instance.new("Decal")
         decal.Face = Enum.NormalId.Top
-        decal.Texture = "rbxassetid://47109339"
+        decal.Texture = "rbxassetid://47109339" -- белый голубь
         decal.Parent = platform
 
+        -- следим за игроком
         task.spawn(function()
             while active and platform and platform.Parent and root.Parent do
                 platform.Position = root.Position - Vector3.new(0, 3, 0)
-                task.wait(0.03)
+                task.wait(0.05)
             end
         end)
 
@@ -122,30 +122,3 @@ button.MouseButton1Click:Connect(function()
         end
     end
 end)
-
--- === Анти-откат (работает после смерти) ===
-local function startAntiBackTeleport(character)
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    local lastPos = hrp.Position
-
-    RunService.Heartbeat:Connect(function()
-        if hrp and hrp.Parent then
-            local currentPos = hrp.Position
-            local distance = (lastPos - currentPos).Magnitude
-
-            if distance > minDistance and currentPos.Y < lastPos.Y + 2 then
-                hrp.CFrame = CFrame.new(lastPos)
-            else
-                lastPos = currentPos
-            end
-        end
-    end)
-end
-
--- если игрок уже заспавнен
-if player.Character then
-    startAntiBackTeleport(player.Character)
-end
-
--- запуск после каждого респавна
-player.CharacterAdded:Connect(startAntiBackTeleport)
